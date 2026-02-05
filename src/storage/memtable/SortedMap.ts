@@ -25,6 +25,12 @@ interface RBNode<V> {
   parent: RBNode<V> | null;
 }
 
+function compareKeys(a: string, b: string): number {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+}
+
 export class SortedMap<V> {
   private root: RBNode<V> | null = null;
   private count: number = 0;
@@ -63,7 +69,7 @@ export class SortedMap<V> {
 
     while (current !== null) {
       parent = current;
-      const cmp = key.localeCompare(current.key);
+      const cmp = compareKeys(key, current.key);
       
       if (cmp === 0) {
         // Key exists, update value
@@ -79,7 +85,7 @@ export class SortedMap<V> {
     // Insert new node
     newNode.parent = parent;
     if (parent !== null) {
-      if (key.localeCompare(parent.key) < 0) {
+      if (compareKeys(key, parent.key) < 0) {
         parent.left = newNode;
       } else {
         parent.right = newNode;
@@ -164,7 +170,7 @@ export class SortedMap<V> {
   private findNode(key: string): RBNode<V> | null {
     let current = this.root;
     while (current !== null) {
-      const cmp = key.localeCompare(current.key);
+      const cmp = compareKeys(key, current.key);
       if (cmp === 0) {
         return current;
       } else if (cmp < 0) {
@@ -198,8 +204,8 @@ export class SortedMap<V> {
   ): void {
     if (node === null) return;
     
-    const cmpStart = node.key.localeCompare(startKey);
-    const cmpEnd = node.key.localeCompare(endKey);
+    const cmpStart = compareKeys(node.key, startKey);
+    const cmpEnd = compareKeys(node.key, endKey);
     
     // Visit left subtree if there might be keys >= startKey
     if (cmpStart > 0) {

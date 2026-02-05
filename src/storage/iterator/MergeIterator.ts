@@ -162,11 +162,8 @@ export class MergeIterator implements IMergeIterator {
   }
 
   private compareHeapEntries = (a: HeapEntry, b: HeapEntry): number => {
-    const keyCompare = a.key.localeCompare(b.key);
-    if (keyCompare !== 0) {
-      return keyCompare;
-    }
-
+    if (a.key < b.key) return -1;
+    if (a.key > b.key) return 1;
     return a.sourceIndex - b.sourceIndex;
   };
 }

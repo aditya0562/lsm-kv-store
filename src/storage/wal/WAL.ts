@@ -320,8 +320,8 @@ export class WAL implements IWAL {
     
     payload.copy(buffer, offset);
     
-    const entryData = buffer.slice(4);
-    const checksum = this.calculateChecksum(entryData);
+    const dataToChecksum = buffer.slice(8);
+    const checksum = this.calculateChecksum(dataToChecksum);
     buffer.writeUInt32BE(checksum, checksumOffset);
     
     return buffer;
