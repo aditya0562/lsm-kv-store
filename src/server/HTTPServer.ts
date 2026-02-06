@@ -1,5 +1,6 @@
 import * as http from 'http';
 import { IStorageEngine } from '../interfaces/Storage';
+import { IReplicationStatusProvider } from './IReplicationStatusProvider';
 
 type RouteHandler = (req: ParsedRequest, res: ResponseHelper) => Promise<void>;
 
@@ -36,15 +37,21 @@ class ResponseHelper {
   }
 }
 
+export interface HTTPServerDependencies {
+  replicationStatusProvider?: IReplicationStatusProvider | undefined;
+}
+
 export class HTTPServer {
   private readonly store: IStorageEngine;
   private readonly port: number;
+  private readonly replicationStatusProvider: IReplicationStatusProvider | undefined;
   private server: http.Server | null = null;
   private readonly routes: Route[] = [];
 
-  constructor(store: IStorageEngine, port: number) {
+  constructor(store: IStorageEngine, port: number, dependencies?: HTTPServerDependencies) {
     this.store = store;
     this.port = port;
+    this.replicationStatusProvider = dependencies?.replicationStatusProvider;
     this.registerRoutes();
   }
 
@@ -55,6 +62,7 @@ export class HTTPServer {
     this.addRoute('GET', '/get/:key', this.handleGet.bind(this));
     this.addRoute('DELETE', '/delete/:key', this.handleDelete.bind(this));
     this.addRoute('GET', '/range', this.handleRange.bind(this));
+    this.addRoute('GET', '/replication/status', this.handleReplicationStatus.bind(this));
   }
 
   private addRoute(method: string, path: string, handler: RouteHandler): void {
@@ -291,6 +299,23 @@ export class HTTPServer {
     }
 
     res.json({ count: results.length, results });
+  }
+
+  private async handleReplicationStatus(_req: ParsedRequest, res: ResponseHelper): Promise<void> {
+    if (!this.replicationStatusProvider) {
+      res.json({
+        enabled: false,
+        message: 'Replication not configured (standalone mode)',
+      });
+      return;
+    }
+
+    const status = this.replicationStatusProvider.getReplicationStatus();
+    res.json({
+      enabled: true,
+      state: status.state,
+      metrics: status.metrics,
+    });
   }
 
   public async start(): Promise<void> {

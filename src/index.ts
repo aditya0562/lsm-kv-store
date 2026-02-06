@@ -1,6 +1,11 @@
 import { LSMStore, LSMStoreDependencies } from './storage/LSMStore';
 import { HTTPServer } from './server/HTTPServer';
 import { TCPServer } from './server/TCPServer';
+import { IReplicationStatusProvider } from './server/IReplicationStatusProvider';
+import { 
+  ReplicationManagerStatusAdapter, 
+  ReplicationServerStatusAdapter,
+} from './server/ReplicationStatusAdapter';
 import { StorageConfig } from './common/Config';
 import { CLIParser } from './cli/CLIParser';
 import { 
@@ -48,11 +53,13 @@ function createApplication(config: StorageConfig): Application {
   
   let replicationManager: IReplicationManager | undefined;
   let replicationServer: IReplicationServer | undefined;
+  let replicationStatusProvider: IReplicationStatusProvider | undefined;
   let dependencies: LSMStoreDependencies | undefined;
 
   if (role === ReplicationRole.PRIMARY && config.replication) {
     const managerConfig = createReplicationManagerConfig(config.replication);
     replicationManager = new ReplicationManager(managerConfig);
+    replicationStatusProvider = new ReplicationManagerStatusAdapter(replicationManager);
     dependencies = {
       onWALEntryAppended: (entry) => replicationManager!.replicate(entry),
     };
@@ -66,9 +73,10 @@ function createApplication(config: StorageConfig): Application {
       serverConfig,
       (entry) => store.applyReplicatedEntry(entry)
     );
+    replicationStatusProvider = new ReplicationServerStatusAdapter(replicationServer);
   }
 
-  const httpServer = new HTTPServer(store, config.httpPort);
+  const httpServer = new HTTPServer(store, config.httpPort, { replicationStatusProvider });
   const tcpServer = new TCPServer(store, { port: config.tcpPort });
 
   return { store, httpServer, tcpServer, replicationManager, replicationServer };

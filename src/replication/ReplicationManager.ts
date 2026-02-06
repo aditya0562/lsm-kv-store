@@ -221,6 +221,7 @@ export class ReplicationManager implements IReplicationManager {
         await this.connect();
       } catch (err) {
         console.warn(`ReplicationManager: Reconnect failed: ${(err as Error).message}`);
+        this.scheduleReconnect();
       }
     }, this.config.reconnectIntervalMs);
   }
