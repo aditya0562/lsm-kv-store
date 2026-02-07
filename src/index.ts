@@ -86,7 +86,11 @@ async function startApplication(app: Application, config: StorageConfig): Promis
   await app.store.initialize();
 
   if (app.replicationManager) {
-    await app.replicationManager.connect();
+    try {
+      await app.replicationManager.connect();
+    } catch {
+      console.warn('Initial backup connection failed — will retry in background');
+    }
   }
 
   if (app.replicationServer) {

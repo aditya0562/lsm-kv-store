@@ -12,6 +12,8 @@
     "test:integration": "jest tests/integration",
     "test:perf": "ts-node scripts/bench.ts",
     "test:features": "ts-node scripts/test-features.ts",
+    "test:api": "ts-node tests/integration/api-test.ts",
+    "test:replication": "ts-node tests/integration/replication-test.ts",
     "clean": "rm -rf dist data data-test"
   },
   "repository": {
